@@ -27,8 +27,6 @@ for (int j = 0; j < n; j++)
 a[i * n + j] = i + j;
 
 }
-for (int j = 0; j < n; j++)
-b[j] = j;
 
     for (int j = 0; j < n; j++)
         b[j] = j;
@@ -42,9 +40,9 @@ b[j] = j;
     return t;
 }
 
-void matrix_vector_product_omp(double *a, double *b, double *c, int m, int n)
+void matrix_vector_product_omp(double *a, double *b, double *c, int m, int n, int p)
 {
-    #pragma omp parallel num_threads(4)
+    #pragma omp parallel num_threads(p)
     {
         int nthreads = omp_get_num_threads();//кол-во потоков
         int threadid = omp_get_thread_num();//текущий поток
@@ -62,7 +60,7 @@ void matrix_vector_product_omp(double *a, double *b, double *c, int m, int n)
     }
 }
 
-double run_parallel(int m, int n)
+double run_parallel(int m, int n, int p)
 {
     double *a, *b, *c;
     // Allocate memory for 2-d array a[m, n]
@@ -70,7 +68,7 @@ double run_parallel(int m, int n)
     b = malloc(sizeof(*b) * n);
     c = calloc(sizeof(*c), m);
 
-    #pragma omp parallel for num_threads(4)
+    #pragma omp parallel num_threads(p)
     {
         int nthreads = omp_get_num_threads();
         int threadid = omp_get_thread_num();
@@ -80,15 +78,15 @@ double run_parallel(int m, int n)
 
         for (int i = lb; i <= ub; i++) {
             for (int j = 0; j < n; j++)
-                a[i*n + j] = i + j;
+                {a[i*n + j] = i + j;}
             c[i] = 0.0;
         }
-    }
     
+    }
     for (int j = 0; j < n; j++)
         b[j] = j;
     double t = omp_get_wtime();
-    matrix_vector_product_omp(a, b, c, m, n);
+    matrix_vector_product_omp(a, b, c, m, n, p);
     t = omp_get_wtime()- t;
     printf("Elapsed time (parallel): %.6f sec.\n", t);
     free(a);
@@ -100,12 +98,17 @@ double run_parallel(int m, int n)
 int main(int argc, char **argv)
 {
     double a, b;
-    int m = 20000;
+    if (argc < 3) {
+        fprintf(stderr, "Usage: %s <m> <p>\n", argv[0]);
+        return 1;
+    }
+    int m = atoi(argv[1]);
+    int p = atoi(argv[2]);
     int n = m;
     printf("Matrix-vector product (c[m] = a[m, n] * b[n]; m = %d, n = %d)\n", m, n);
     printf("Memory used: %" PRIu64 " MiB\n", ((m * n + m + n) * sizeof(double)) >> 20);
     a = run_serial(m, n);
-    b = run_parallel(m, n);
+    b = run_parallel(m, n, p);
     printf("s: %lf\n", a/b);
 
     return 0;

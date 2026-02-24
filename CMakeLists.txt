@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 
-project(soup VERSION 0.0.1 LANGUAGES CXX)
+project(soup VERSION 0.0.1 LANGUAGES C)
 
-set(CMAKE_CXX_STANDARD 17) 
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_C_STANDARD 11) 
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
-add_executable(program mxs.cpp)
+
+find_package(OpenMP REQUIRED)
+add_executable(program mxs.c)
+target_link_libraries(program PRIVATE OpenMP::OpenMP_C)
