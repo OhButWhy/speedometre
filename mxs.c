@@ -16,7 +16,7 @@ void matrix_vector_product(double *a, double *b, double *c, int m, int n)
 
 double run_serial(int m, int n)
 {
-    double *a, *b, *c0, *c1, *c2, *c3;
+    double *a, *b, *c0;
     a = malloc(sizeof(*a) * m * n);
     b = malloc(sizeof(*b) * n);
     c0 = calloc(sizeof(*c0),  m);
