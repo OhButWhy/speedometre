@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <omp.h>
 #include <inttypes.h>
-#include <time.h>
 
 void matrix_vector_product(double *a, double *b, double *c, int m, int n)
 {
