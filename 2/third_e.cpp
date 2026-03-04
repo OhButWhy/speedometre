@@ -109,7 +109,8 @@ void easy_iterational_method_two(int m, int p, double initial_t) {
         
         #pragma omp barrier
         
-        while (true) {
+        bool my_stop = false;
+        while (!my_stop) {
             #pragma omp single
             {
                 if (sqrt(criteria) <= EPS || iter > 1000) {
@@ -117,49 +118,45 @@ void easy_iterational_method_two(int m, int p, double initial_t) {
                 } else {
                     if (criteria > 1000) {
                         t *= -1.0;
-                        
                     }
                     criteria = 0.0;
                     iter++;
                 }
-                
             }
-            #pragma omp barrier
 
-            if (should_stop)
-                break;
+            my_stop = should_stop;
 
-            double local_criteria = 0.0;
-            for (int i = lb; i <= ub; i++) {
-                double sigma = 0.0;
-                for (int j = 0; j < m; j++) {
-                    if (j != i){
-                        sigma += A[i * m + j] * x[j];
+            if (!my_stop) {
+                double local_criteria = 0.0;
+                for (int i = lb; i <= ub; i++) {
+                    double sigma = 0.0;
+                    for (int j = 0; j < m; j++) {
+                        if (j != i){
+                            sigma += A[i * m + j] * x[j];
+                        }
+                    }
+                    x_new[i] = x[i] - t * (sigma - b[i]);
+                    
+                    if (b[i] != 0.0) {
+                        double d = (sigma - b[i]) / b[i];
+                        local_criteria += d * d;
+                    } else {
+                        local_criteria += (sigma - b[i]) * (sigma - b[i]);
                     }
                 }
-                x_new[i] = x[i] - t * (sigma - b[i]);
-                
-                if (b[i] != 0.0) {
-                    double d = (sigma - b[i]) / b[i];
-                    local_criteria += d * d;
-                } else {
-                    local_criteria += (sigma - b[i]) * (sigma - b[i]);
-                }
+
+                #pragma omp barrier
+
+                #pragma omp atomic
+                criteria += local_criteria;
+
+                #pragma omp barrier
+
+                for (int i = lb; i <= ub; i++)
+                    x[i] = x_new[i];
+
+                #pragma omp barrier
             }
-            #pragma omp barrier
-            
-            #pragma omp atomic
-            criteria += local_criteria;
-            
-            #pragma omp barrier
-
-            for (int i = lb; i <= ub; i++)
-                x[i] = x_new[i];
-            
-            #pragma omp barrier
-
-
-            
         }
         
     }
