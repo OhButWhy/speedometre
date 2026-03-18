@@ -5,27 +5,26 @@
 #include <vector>
 #include <iostream>
 #include <time.h>
-using namespace std;
 
 
-void easy_iterational_method_one(int m, int p, double initial_t) {
+void easy_iterational_method_one(int m, int p, double initial_t, int chunk_size) {
     const double EPS   = 1e-5;
 
     omp_set_num_threads(p);
     
 
   
-    vector<double> A(m * m);
-    #pragma omp parallel for schedule(dynamic, 4) 
+    std::vector<double> A(m * m);
+    #pragma omp parallel for schedule(dynamic, chunk_size) 
     for (int i = 0; i < m; i++)
         for (int j = 0; j < m; j++)
             A[i * m + j] = (i == j) ? 2.0 : 1.0;
 
 
-    vector<double> b(m, m + 1.0);
+    std::vector<double> b(m, m + 1.0);
 
-    vector<double> x(m, 0.0);
-    vector<double> x_new(m, 0.0);
+    std::vector<double> x(m, 0.0);
+    std::vector<double> x_new(m, 0.0);
 
     
 
@@ -45,7 +44,7 @@ void easy_iterational_method_one(int m, int p, double initial_t) {
 
 
  
-        #pragma omp parallel for schedule(dynamic, 4) reduction(+ : criteria) 
+        #pragma omp parallel for schedule(dynamic, chunk_size) reduction(+ : criteria) 
         for (int i = 0; i < m; i++) {
             double sigma = 0.0;
             for (int j = 0; j < m; j++) {
@@ -61,28 +60,24 @@ void easy_iterational_method_one(int m, int p, double initial_t) {
             }
         }
 
-        #pragma omp parallel for schedule(dynamic, 4) 
+        #pragma omp parallel for schedule(dynamic, chunk_size) 
         for (int i = 0; i < m; i++)
             x[i] = x_new[i];
 
         iter++;
     } 
 
-    // printf("Iterations: %d, ||dx|| = %.2e\n", iter, sqrt(criteria));
-    // std::cout<< "Solution (first 10 elements):";
-    //  int print_n = (m < 10) ? m : 10;
-    //  for (int i = 0; i < print_n; i++)
-    //     printf("  x[%d] = %.6f\n", i, x[i]);
+
 }
 
 void easy_iterational_method_two(int m, int p, double initial_t) {
     const double EPS = 1e-5;
-    vector<double> b(m, m + 1.0);
+    std::vector<double> b(m, m + 1.0);
     
-    vector<double> x(m, 0.0);
-    vector<double> x_new(m, 0.0);
+    std::vector<double> x(m, 0.0);
+    std::vector<double> x_new(m, 0.0);
     
-    vector<double> A(m * m);
+    std::vector<double> A(m * m);
     
     int iter = 0;
     double criteria = 1.0;
@@ -160,30 +155,30 @@ void easy_iterational_method_two(int m, int p, double initial_t) {
         }
         
     }
-        // printf("Iterations: %d, ||dx|| = %.2e\n", iter, sqrt(criteria));
-    // std::cout<< "Solution (first 10 elements):";
-    //  int print_n = (m < 10) ? m : 10;
-    //  for (int i = 0; i < print_n; i++)
-    //     printf("  x[%d] = %.6f\n", i, x[i]);
+
 }
 
 int main(int argc, char **argv) { //int argc, char **argv
-    if (argc < 3) {
+    if (argc < 4) {
         return 1;
     }
     int m = atoi(argv[1]); // размер системы
     int p = atoi(argv[2]); // количество потоков
+    int chunk_size = atoi(argv[3]); // размер чанка для первого способа
+    if (chunk_size <= 0) {
+        return 1;
+    }
     double step_t = 1.0 / (m + 1.0);
 
     double elapsed_one = omp_get_wtime();    
-    easy_iterational_method_one(m, p, step_t);
+    easy_iterational_method_one(m, p, step_t, chunk_size);
     elapsed_one = omp_get_wtime()- elapsed_one;
-    cout<< "separate parallel sections time:"<< elapsed_one << endl;
+    std::cout<< "separate parallel sections time:"<< elapsed_one << std::endl;
 
-    double elapsed_two = omp_get_wtime();    
-    easy_iterational_method_two(m, p, step_t);
-    elapsed_two = omp_get_wtime()- elapsed_two;
+    // double elapsed_two = omp_get_wtime();    
+    // easy_iterational_method_two(m, p, step_t);
+    // elapsed_two = omp_get_wtime()- elapsed_two;
 
-    cout<< "one parallel section time:"<< elapsed_two << endl;
+    // std::cout<< "one parallel section time:"<< elapsed_two << std::endl;
     return 0;
 }
