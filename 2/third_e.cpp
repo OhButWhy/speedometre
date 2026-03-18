@@ -15,7 +15,7 @@ void easy_iterational_method_one(int m, int p, double initial_t, int chunk_size)
 
   
     std::vector<double> A(m * m);
-    #pragma omp parallel for schedule(dynamic, chunk_size) 
+    #pragma omp parallel for schedule(static, chunk_size) 
     for (int i = 0; i < m; i++)
         for (int j = 0; j < m; j++)
             A[i * m + j] = (i == j) ? 2.0 : 1.0;
@@ -44,7 +44,7 @@ void easy_iterational_method_one(int m, int p, double initial_t, int chunk_size)
 
 
  
-        #pragma omp parallel for schedule(dynamic, chunk_size) reduction(+ : criteria) 
+        #pragma omp parallel for schedule(static, chunk_size) reduction(+ : criteria) 
         for (int i = 0; i < m; i++) {
             double sigma = 0.0;
             for (int j = 0; j < m; j++) {
@@ -60,7 +60,7 @@ void easy_iterational_method_one(int m, int p, double initial_t, int chunk_size)
             }
         }
 
-        #pragma omp parallel for schedule(dynamic, chunk_size) 
+        #pragma omp parallel for schedule(static, chunk_size) 
         for (int i = 0; i < m; i++)
             x[i] = x_new[i];
 
